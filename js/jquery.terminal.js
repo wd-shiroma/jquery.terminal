@@ -1520,7 +1520,7 @@
                 }
                 self.oneTime(10, function() {
                     if (!clip.is(':focus') && enabled) {
-                        clip.trigger('focus', [true]);
+                        //clip.trigger('focus', [true]);
                     }
                 });
             } else if (focus && (is_mobile || !enabled)) {
@@ -2775,7 +2775,7 @@
     var color_hex_re = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
     var url_re = /(\bhttps?:\/\/(?:(?:(?!&[^;]+;)|(?=&amp;))[^\s"'<>\][)])+)/gi;
     var url_nf_re = /\b(?![^\s[\]]*])(https?:\/\/(?:(?:(?!&[^;]+;)|(?=&amp;))[^\s"'<>\][)])+)/gi;
-    var email_re = /((([^<>('")[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,})))/g;
+    var email_re = /((?:@?([a-zA-Z0-9_]+)@((?:[A-Za-z0-9][A-Za-z0-9\-]{0,61}[A-Za-z0-9]?\.)+[A-Za-z]+))|(?:@([a-zA-Z0-9_]+)))/g;
     var command_re = /((?:"[^"\\]*(?:\\[\S\s][^"\\]*)*"|'[^'\\]*(?:\\[\S\s][^'\\]*)*'|\/[^\/\\]*(?:\\[\S\s][^\/\\]*)*\/[gimsuy]*(?=\s|$)|(?:\\\s|\S))+)(?=\s|$)/gi;
     var extended_command_re = /^\s*((terminal|cmd)::([a-z_]+)\(([\s\S]*)\))\s*$/;
     var format_begin_re = /(\[\[[!gbiuso]*;[^;]*;[^\]]*\])/i;
@@ -4020,9 +4020,7 @@
                             }
                             var result;
                             if (style.indexOf('!') !== -1) {
-                                if (data.match(email_re)) {
-                                    result = '<a href="mailto:' + data + '"';
-                                } else {
+                                if (data.match(url_re)) {
                                     if (!settings.anyLinks &&
                                         !data.match(/^(https?|ftp):\/\//)) {
                                         data = '';
@@ -4036,6 +4034,8 @@
                                         rel.unshift("nofollow");
                                     }
                                     result += ' rel="' + rel.join(' ') + '"';
+                                } else {
+                                    result = '<a class="a_acct" name="a_acct"';
                                 }
                                 // make focus to terminal textarea that will enable
                                 // terminal when pressing tab and terminal is disabled
@@ -5392,8 +5392,12 @@
                     if (string !== '') {
                         if (!line_settings.raw) {
                             if (settings.convertLinks) {
-                                string = string.replace(email_re, '[[!;;]$1]').
-                                    replace(url_nf_re, '[[!;;]$1]');
+                                if (string.match(url_nf_re)) {
+                                    string = string.replace(url_nf_re, '[[!;;]$1]');
+                                }
+                                else if (string.match(email_re)) {
+                                    string = string.replace(email_re, '[[!;;]$1]');
+                                }
                             }
                             if (line_settings.formatters) {
                                 try {
@@ -5406,36 +5410,6 @@
                                 }
                             }
                             var parts = string.split(format_exec_re);
-                            string = $.map(parts, function(string) {
-                                if (string && string.match(format_exec_re) &&
-                                    !$.terminal.is_formatting(string)) {
-                                    // redraw should not execute commands and it have
-                                    // and lines variable have all extended commands
-                                    string = string.replace(/^\[\[|\]\]$/g, '');
-                                    if (line_settings.exec) {
-                                        var prev_cmd;
-                                        if (prev_command) {
-                                            prev_command = prev_command.command.trim();
-                                        }
-                                        if (prev_cmd === string.trim()) {
-                                            self.error(strings().recursiveCall);
-                                        } else {
-                                            $.terminal.extended_command(self, string, {
-                                                invokeMethods: settings.invokeMethods
-                                            });
-                                        }
-                                    }
-                                    return '';
-                                } else {
-                                    return string;
-                                }
-                            }).join('');
-                            if (string !== '') {
-                                string = crlf($.terminal.normalize(string));
-                                string = $.terminal.encode(string, {
-                                    tabs: settings.tabs
-                                });
-                            }
                         }
                         if (string !== '') {
                             buffer_line(string, line.index, line_settings);
@@ -8024,7 +7998,7 @@
         terminals.append(self);
         function focus_terminal() {
             if (old_enabled) {
-                self.focus();
+                //self.focus();
             }
         }
         function blur_terminal() {
@@ -8156,7 +8130,7 @@
                 self.click(function() {
                     if (!frozen) {
                         if (!self.enabled()) {
-                            self.focus();
+                            //self.focus();
                             command_line.enable();
                         } else {
                             self.disable();
@@ -8208,7 +8182,7 @@
                             if (++count === 1) {
                                 if (!frozen) {
                                     if (!enabled) {
-                                        self.focus();
+                                        //self.focus();
                                     } else {
                                         var timeout = settings.clickTimeout;
                                         self.oneTime(timeout, name, click);
